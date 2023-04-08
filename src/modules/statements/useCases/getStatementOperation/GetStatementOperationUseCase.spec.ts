@@ -1,17 +1,19 @@
 import { InMemoryStatementsRepository } from "@modules/statements/repositories/in-memory/InMemoryStatementsRepository";
 import { InMemoryUsersRepository } from "@modules/users/repositories/in-memory/InMemoryUsersRepository";
 import { CreateUserUseCase } from "@modules/users/useCases/createUser/CreateUserUseCase";
-import { CreateStatementUseCase } from "./CreateStatementUseCase";
 
 import { OperationType } from "../../entities/Statement";
-import { CreateStatementError } from "./CreateStatementError";
+import { CreateStatementUseCase } from "../createStatement/CreateStatementUseCase";
+import { GetStatementOperationError } from "./GetStatementOperationError";
+import { GetStatementOperationUseCase } from "./GetStatementOperationUseCase";
 
 let createUserUseCase: CreateUserUseCase;
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let inMemoryStatementsRepository: InMemoryStatementsRepository;
 let createStatementUseCase: CreateStatementUseCase;
+let getStatementOperationUseCase: GetStatementOperationUseCase;
 
-describe("Post statement", () => {
+describe("Get statement", () => {
   beforeEach(() => {
     inMemoryUsersRepository = new InMemoryUsersRepository();
     inMemoryStatementsRepository = new InMemoryStatementsRepository();
@@ -20,75 +22,52 @@ describe("Post statement", () => {
       inMemoryUsersRepository,
       inMemoryStatementsRepository
     );
-  });
-
-  it("Should be able to do a deposit", async () => {
-    const user = await createUserUseCase.execute({
-      name: "Diego da S. Borges",
-      email: "borges10002@gmail.com",
-      password: "123456",
-    });
-
-    const result = await createStatementUseCase.execute({
-      user_id: user.id,
-      amount: 4000,
-      description: "monthly expense",
-      type: "deposit" as OperationType,
-    });
-
-    expect(result).toEqual(
-      expect.objectContaining({
-        user_id: result.user_id,
-        amount: result.amount,
-        description: result.description,
-        type: result.type,
-      })
+    getStatementOperationUseCase = new GetStatementOperationUseCase(
+      inMemoryUsersRepository,
+      inMemoryStatementsRepository
     );
   });
 
-  it("Should be able to do a withdraw", async () => {
+  it("Should be able to get a statement", async () => {
     const user = await createUserUseCase.execute({
       name: "Diego da S. Borges",
       email: "borges10002@gmail.com",
       password: "123456",
     });
 
-    await createStatementUseCase.execute({
+    const statement = await createStatementUseCase.execute({
       user_id: user.id,
       amount: 400,
       description: "monthly expense",
       type: "deposit" as OperationType,
     });
 
-    const result = await createStatementUseCase.execute({
-      user_id: user.id,
-      amount: 200,
-      description: "sado for payment of bills",
-      type: "withdraw" as OperationType,
+    const result = await getStatementOperationUseCase.execute({
+      user_id: statement.user_id,
+      statement_id: statement.id,
     });
 
     expect(result).toEqual(
       expect.objectContaining({
+        id: result.id,
         user_id: result.user_id,
+        type: result.type,
         amount: result.amount,
         description: result.description,
-        type: result.type,
       })
     );
   });
 
-  it("Should not be able to do a statement with nonexistent user", async () => {
+  it("Should not be able to get a statement of a nonexistent user", async () => {
     await expect(
-      createStatementUseCase.execute({
+      getStatementOperationUseCase.execute({
         user_id: "123456",
-        amount: 200,
-        description: "sado for payment of bills",
-        type: "withdraw" as OperationType,
+        statement_id: "12456",
       })
-    ).rejects.toEqual(new CreateStatementError.UserNotFound());
+    ).rejects.toEqual(new GetStatementOperationError.UserNotFound());
   });
 
-  it("Should not be able to do a withdraw with insufficient fund", async () => {
+  it("Should not be able to get a nonexistent statement", async () => {
     const user = await createUserUseCase.execute({
       name: "Diego da S. Borges",
       email: "borges10002@gmail.com",
@@ -96,12 +75,10 @@ describe("Post statement", () => {
     });
 
     await expect(
-      createStatementUseCase.execute({
+      getStatementOperationUseCase.execute({
         user_id: user.id,
-        amount: 200,
-        description: "sado for payment of bills",
-        type: "withdraw" as OperationType,
+        statement_id: "123456",
       })
-    ).rejects.toEqual(new CreateStatementError.InsufficientFunds());
+    ).rejects.toEqual(new GetStatementOperationError.StatementNotFound());
   });
 });
