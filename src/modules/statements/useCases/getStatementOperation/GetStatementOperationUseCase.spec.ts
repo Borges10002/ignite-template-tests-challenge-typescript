@@ -40,6 +40,8 @@ describe("Get statement", () => {
       amount: 400,
       description: "monthly expense",
       type: "deposit" as OperationType,
+      recipient_id: user.id,
+      sender_id: user.id,
     });
 
     const result = await getStatementOperationUseCase.execute({

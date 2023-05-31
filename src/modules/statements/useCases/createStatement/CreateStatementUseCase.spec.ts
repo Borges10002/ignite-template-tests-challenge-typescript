@@ -34,6 +34,8 @@ describe("Post statement", () => {
       amount: 4000,
       description: "monthly expense",
       type: "deposit" as OperationType,
+      recipient_id: user.id,
+      sender_id: user.id,
     });
 
     expect(result).toEqual(
@@ -42,6 +44,8 @@ describe("Post statement", () => {
         amount: result.amount,
         description: result.description,
         type: result.type,
+        recipient_id: result.recipient_id,
+        sender_id: result.sender_id,
       })
     );
   });
@@ -58,6 +62,8 @@ describe("Post statement", () => {
       amount: 400,
       description: "monthly expense",
       type: "deposit" as OperationType,
+      recipient_id: user.id,
+      sender_id: user.id,
     });
 
     const result = await createStatementUseCase.execute({
@@ -65,6 +71,8 @@ describe("Post statement", () => {
       amount: 200,
       description: "sado for payment of bills",
       type: "withdraw" as OperationType,
+      recipient_id: user.id,
+      sender_id: user.id,
     });
 
     expect(result).toEqual(
@@ -73,6 +81,8 @@ describe("Post statement", () => {
         amount: result.amount,
         description: result.description,
         type: result.type,
+        recipient_id: result.recipient_id,
+        sender_id: result.sender_id,
       })
     );
   });
@@ -84,6 +94,8 @@ describe("Post statement", () => {
         amount: 200,
         description: "sado for payment of bills",
         type: "withdraw" as OperationType,
+        recipient_id: "123456",
+        sender_id: "123456",
       })
     ).rejects.toEqual(new CreateStatementError.UserNotFound());
   });
@@ -101,6 +113,8 @@ describe("Post statement", () => {
         amount: 200,
         description: "sado for payment of bills",
         type: "withdraw" as OperationType,
+        recipient_id: user.id,
+        sender_id: user.id,
       })
     ).rejects.toEqual(new CreateStatementError.InsufficientFunds());
   });
